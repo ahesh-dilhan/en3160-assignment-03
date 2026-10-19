@@ -16,8 +16,13 @@ import torch
 from torch import nn
 from torchvision import datasets, models, transforms
 from .models import ManualMLP, LeNet5, ModernCNN, freeze_backbone_training_mode
+from .downloads import CIFAR_URL, fetch_ranges
 
 ROOT = Path(__file__).resolve().parents[1]
+os.environ.setdefault('TORCH_HOME', str(ROOT/'data'/'torch'))
+# Original host currently redirects to an unreachable endpoint. This is the
+# byte-identical archive mirror; torchvision still verifies its canonical MD5.
+datasets.CIFAR10.url = CIFAR_URL
 SEED = 230145
 
 
@@ -95,6 +100,8 @@ def save_run(name, history, config, train, test, truth, predicted, checkpoint, s
 def cifar(device):
     seed_everything()
     start = time.perf_counter()
+    fetch_ranges(CIFAR_URL, ROOT/'data'/'cifar-10-python.tar.gz',170498071,
+                 'c58f30108f718f92721af3b95e74349a','md5')
     tr = datasets.CIFAR10(str(ROOT/'data'), train=True, download=True)
     te = datasets.CIFAR10(str(ROOT/'data'), train=False, download=True)
     def convert(ds):
@@ -205,6 +212,9 @@ def evaluate_loader(model, loader, device):
 
 
 def transfer(device):
+    fetch_ranges('https://download.pytorch.org/models/resnet18-f37072fd.pth',
+                 ROOT/'data'/'torch'/'hub'/'checkpoints'/'resnet18-f37072fd.pth',
+                 46830571,'f37072fd')
     target = hymenoptera()
     normalize = transforms.Normalize([.485,.456,.406],[.229,.224,.225])
     aug = transforms.Compose([transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip(),
