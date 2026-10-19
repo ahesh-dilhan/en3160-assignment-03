@@ -5,6 +5,26 @@
 This repository contains the full-data experiments, notebook, figures, recorded metrics,
 and LaTeX-generated notebook PDF for the supplied October 9, 2026 assignment.
 
+## Completed deliverables
+
+- [Assignment 3 report, 8 pages](output/230145E_a03.pdf)
+- [Submission filename specified literally in the brief](output/230145E_a02.pdf) — identical PDF, Assignment 3 content
+- [Executed Jupyter notebook](notebooks/230145E_a03.ipynb)
+- [LaTeX source bundle](output/230145E_a03_latex.zip)
+- [Recorded results](results/) and [trained checkpoints](checkpoints/)
+
+| Model | Epochs | Training accuracy | Held-out accuracy |
+|---|---:|---:|---:|
+| Manual CIFAR-10 MLP | 10 | 53.13% | 47.77% test |
+| LeNet-5 on MNIST | 10 | 99.60% | 98.78% test |
+| Modern CNN on MNIST | 10 | 99.61% | 99.22% test |
+| ResNet18 fine-tuning | 25 | 99.59% | 94.12% validation |
+| ResNet18 fixed features | 25 | 97.54% | 96.08% validation |
+
+All five saved checkpoints were independently reloaded; their held-out predictions
+exactly match the archived arrays. Four model/gradient checks pass. The PDF was
+rendered and visually reviewed, including all eight figures and black document colours.
+
 ## Experiments
 
 1. CIFAR-10: 3072 → 100 sigmoid → 10 dense network, stable cross-entropy,
@@ -25,10 +45,22 @@ python -m pytest tests -q
 python -m src.downloads
 python scripts/audit_data.py
 python -m src.experiments --task all
+python scripts/verify_results.py
+python scripts/verify_checkpoints.py
 python scripts/make_figures.py
 python scripts/build_notebook.py
 python scripts/export_pdf.py
+python scripts/verify_pdf.py
 ```
+
+For the recorded CUDA build, install `torch==2.6.0+cu124` and
+`torchvision==0.21.0+cu124` using the additional package index
+`https://download.pytorch.org/whl/cu124`. CPU execution is also supported; it is slower
+and can give slightly different floating-point results. PDF export needs
+[Tectonic](https://tectonic-typesetting.github.io/) on PATH, or pass its executable
+with `python scripts/export_pdf.py --tectonic C:/path/to/tectonic.exe`.
+Pandoc is provided by `pypandoc_binary`. Training is not repeated by the notebook
+build unless `RUN_TRAINING=True` is selected explicitly.
 
 Training automatically downloads the original datasets. `data/` and upstream cached
 ImageNet weights are excluded from Git; sources and a generated file-hash manifest

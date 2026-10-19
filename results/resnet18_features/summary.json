@@ -1,0 +1,47 @@
+{
+  "name": "resnet18_features",
+  "environment": {
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "numpy": "2.5.4",
+    "device": "NVIDIA GeForce RTX 2050",
+    "cuda": "12.4",
+    "seed": 230145,
+    "threads": 6
+  },
+  "train": {
+    "loss": 0.07629842573746307,
+    "accuracy": 0.9754098360655737,
+    "correct": 238,
+    "count": 244
+  },
+  "validation": {
+    "loss": 0.11285911393321417,
+    "accuracy": 0.9607843137254902,
+    "correct": 147,
+    "count": 153
+  },
+  "duration_seconds": 95.0483032000011,
+  "final_epoch": 25,
+  "checkpoint_sha256": "c09de4adbdb80d3bfe1dfd91a8a8f1d3c284c327e6f9e64c783210d1725f42fc",
+  "config": {
+    "epochs": 25,
+    "batch_size": 16,
+    "optimizer": "SGD",
+    "lr": 0.001,
+    "momentum": 0.9,
+    "scheduler": "StepLR(step_size=7,gamma=0.1)",
+    "weights": "ResNet18_Weights.IMAGENET1K_V1",
+    "train_size": 244,
+    "validation_size": 153,
+    "classes": [
+      "ants",
+      "bees"
+    ],
+    "trainable_parameters": 1026,
+    "frozen_batchnorm": true,
+    "checkpoint_selection": "final epoch 25",
+    "evaluation_transform": "Resize(256), CenterCrop(224), ImageNet normalization",
+    "training_transform": "RandomResizedCrop(224), RandomHorizontalFlip(), ImageNet normalization"
+  }
+}

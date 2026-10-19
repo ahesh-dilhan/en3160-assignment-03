@@ -1,0 +1,41 @@
+{
+  "name": "cifar_manual",
+  "config": {
+    "epochs": 10,
+    "batch_size": 50,
+    "initial_lr": 0.1,
+    "lr_decay": 0.9,
+    "regularization": 0,
+    "hidden_units": 100,
+    "activation": "sigmoid",
+    "initialization": "fan-in normal",
+    "normalization": "RGB channel-wise (x/255 - 0.5)/0.5",
+    "optimizer": "manual SGD",
+    "training_size": 50000,
+    "test_size": 10000
+  },
+  "environment": {
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "numpy": "2.5.4",
+    "device": "NVIDIA GeForce RTX 2050",
+    "cuda": "12.4",
+    "seed": 230145,
+    "threads": 6
+  },
+  "train": {
+    "loss": 1.372755838623047,
+    "accuracy": 0.5313,
+    "correct": 26565,
+    "count": 50000
+  },
+  "test": {
+    "loss": 1.5060492858886718,
+    "accuracy": 0.4777,
+    "correct": 4777,
+    "count": 10000
+  },
+  "duration_seconds": 11.56935650000014,
+  "checkpoint_sha256": "b664746c569d94b84297337976caacf1389f222c3c397bbe59bc01c6ffe333b4",
+  "final_epoch": 10
+}

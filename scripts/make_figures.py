@@ -49,7 +49,7 @@ def matrices(names,labels,classes,out):
         cm=np.loadtxt(ROOT/'results'/name/'confusion_matrix.csv',delimiter=',',dtype=int)
         ax.imshow(np.log1p(cm),cmap=cmap,vmin=0,vmax=np.log1p(cm.max()))
         for (i,j),v in np.ndenumerate(cm):
-            ax.text(j,i,str(v),ha='center',va='center',fontsize=7 if len(classes)==10 else 13,color='black')
+            ax.text(j,i,str(v),ha='center',va='center',fontsize=9 if len(classes)==10 else 13,color='black')
         ax.set(xticks=range(len(classes)),yticks=range(len(classes)),xticklabels=classes,
                yticklabels=classes,xlabel='Predicted label',ylabel='True label',title=title)
         ax.spines[['top','right']].set_visible(True)

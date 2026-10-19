@@ -30,6 +30,7 @@ PREAMBLE=r'''\documentclass[10pt,a4paper]{article}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.13}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\newcommand{\passthrough}[1]{#1}
 \titleformat{\section}{\large\bfseries}{}{0em}{}
 \titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
 \titleformat{\subsubsection}{\normalsize\bfseries}{}{0em}{}
@@ -68,11 +69,16 @@ def markdown(text):
     pagebreak='<!-- pagebreak -->' in text
     text=text.replace('<!-- pagebreak -->','')
     result=pypandoc.convert_text(text,'latex',format='markdown+pipe_tables+tex_math_dollars',
-                                 extra_args=['--wrap=none','--listings'])
-    return ('\\clearpage\n' if pagebreak else '')+result
+                                 extra_args=['--wrap=none','--syntax-highlighting=idiomatic'])
+    # Pandoc on Windows can return CRLF; avoid doubling CR when writing TeX.
+    # The bundled TeX longtable predates Pandoc's special 'none' counter.
+    result=result.replace(r'\def\LTcaptype{none}',r'\def\LTcaptype{table}')
+    return ('\\clearpage\n' if pagebreak else '')+result.replace('\r','')
 
 def listing(text,language=True):
-    return '\\begin{lstlisting}'+('' if language else '[language={}]')+'\n'+ascii_text(text).rstrip()+'\n\\end{lstlisting}\n'
+    return ('\\par\\noindent\\begin{minipage}{\\linewidth}\n\\begin{lstlisting}'
+            +('' if language else '[language={}]')+'\n'+ascii_text(text).rstrip()
+            +'\n\\end{lstlisting}\n\\end{minipage}\\par\n')
 
 def main():
     parser=argparse.ArgumentParser()
@@ -83,11 +89,15 @@ def main():
     image_dir=ROOT/'report'/'notebook_images'
     image_dir.mkdir(exist_ok=True)
     image_count=0
+    pending_caption=False
     for index,cell in enumerate(notebook.cells):
         if cell.cell_type=='markdown':
             source=cell.source
             if index==0: source='This notebook'+source.split('This notebook',1)[1]
             pieces.append(markdown(source))
+            if pending_caption:
+                pieces.append('\\end{minipage}\\par\n')
+                pending_caption=False
         elif cell.cell_type=='code':
             if 'hide-input' not in cell.metadata.get('tags',[]):pieces.append(listing(cell.source))
             for output in cell.get('outputs',[]):
@@ -99,12 +109,13 @@ def main():
                         image_count+=1
                         name=f'figure_{image_count:02d}.png'
                         (image_dir/name).write_bytes(base64.b64decode(data['image/png']))
-                        pieces.append(r'\begin{center}\includegraphics[width=\linewidth,height=.56\textheight,keepaspectratio]{notebook_images/'+name+r'}\end{center}'+'\n')
+                        pieces.append(r'\par\noindent\begin{minipage}{\linewidth}\centering\includegraphics[width=\linewidth,height=.56\textheight,keepaspectratio]{notebook_images/'+name+'}\\par\n')
+                        pending_caption=True
                     elif 'text/markdown' in data:pieces.append(markdown(data['text/markdown']))
                     elif 'text/plain' in data:pieces.append(listing(data['text/plain'],False))
     pieces.append('\\end{document}\n')
     tex=ROOT/'report'/'230145E_a03.tex'
-    tex.write_text('\n'.join(pieces),encoding='utf-8')
+    tex.write_text('\n'.join(pieces),encoding='utf-8',newline='\n')
     subprocess.run([args.tectonic,'--keep-logs','--outdir',str(ROOT/'output'),str(tex)],cwd=tex.parent,check=True)
     final=ROOT/'output'/'230145E_a03.pdf'
     shutil.copyfile(final,ROOT/'output'/'230145E_a02.pdf')

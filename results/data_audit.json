@@ -1,0 +1,127 @@
+{
+  "CIFAR10": {
+    "splits": {
+      "train": {
+        "count": 50000,
+        "shape": [
+          50000,
+          32,
+          32,
+          3
+        ],
+        "dtype": "uint8",
+        "counts_per_class": [
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000
+        ]
+      },
+      "test": {
+        "count": 10000,
+        "shape": [
+          10000,
+          32,
+          32,
+          3
+        ],
+        "dtype": "uint8",
+        "counts_per_class": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ]
+      }
+    },
+    "exact_pixel_hashes_shared_between_splits": 0,
+    "policy": "Keep the official splits unchanged; report exact pixel matches transparently."
+  },
+  "MNIST": {
+    "splits": {
+      "train": {
+        "count": 60000,
+        "shape": [
+          60000,
+          28,
+          28
+        ],
+        "dtype": "uint8",
+        "counts_per_class": [
+          5923,
+          6742,
+          5958,
+          6131,
+          5842,
+          5421,
+          5918,
+          6265,
+          5851,
+          5949
+        ]
+      },
+      "test": {
+        "count": 10000,
+        "shape": [
+          10000,
+          28,
+          28
+        ],
+        "dtype": "uint8",
+        "counts_per_class": [
+          980,
+          1135,
+          1032,
+          1010,
+          982,
+          892,
+          958,
+          1028,
+          974,
+          1009
+        ]
+      }
+    },
+    "exact_pixel_hashes_shared_between_splits": 0,
+    "policy": "Keep the official splits unchanged; report exact pixel matches transparently."
+  },
+  "Hymenoptera": {
+    "splits": {
+      "train": {
+        "count": 244,
+        "classes": [
+          "ants",
+          "bees"
+        ],
+        "counts_per_class": [
+          123,
+          121
+        ]
+      },
+      "val": {
+        "count": 153,
+        "classes": [
+          "ants",
+          "bees"
+        ],
+        "counts_per_class": [
+          70,
+          83
+        ]
+      }
+    },
+    "exact_pixel_hashes_shared_between_splits": 0
+  }
+}

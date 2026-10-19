@@ -1,0 +1,45 @@
+{
+  "name": "modern_cnn",
+  "config": {
+    "epochs": 10,
+    "batch_size": 128,
+    "optimizer": "Adam",
+    "lr": 0.001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "weight_decay": 0,
+    "augmentation": "none",
+    "normalization": "(x/255 - 0.1307)/0.3081, padded from 28 to 32",
+    "training_size": 60000,
+    "test_size": 10000,
+    "parameters": 113386,
+    "metric_mode": "eval after each epoch on full train and test splits",
+    "checkpoint_selection": "final epoch 10, no test-based selection"
+  },
+  "environment": {
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "numpy": "2.5.4",
+    "device": "NVIDIA GeForce RTX 2050",
+    "cuda": "12.4",
+    "seed": 230145,
+    "threads": 6
+  },
+  "train": {
+    "loss": 0.01239479717835784,
+    "accuracy": 0.9961166666666667,
+    "correct": 59767,
+    "count": 60000
+  },
+  "test": {
+    "loss": 0.025158230383472983,
+    "accuracy": 0.9922,
+    "correct": 9922,
+    "count": 10000
+  },
+  "duration_seconds": 57.84737610000229,
+  "checkpoint_sha256": "2fa3de612cfe8b451d7d36d994ce785beec0469c392b139bb08be69604adebd6",
+  "final_epoch": 10
+}

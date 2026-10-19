@@ -27,7 +27,8 @@ def code(text,hide=False):
 def picture(filename,caption):
     code(f"display(Image(filename=str(ROOT/'results'/'figures'/'{filename}.png')))",True)
     md('*'+caption+'*')
-def section(text):md('<!-- pagebreak -->\n\n'+text)
+def section(text):
+    md(('<!-- pagebreak -->\n\n' if text.startswith('## 1.') else '')+text)
 
 md('# Neural networks: from manual gradients to transfer learning\n\n'
    '**Dilhan W.A. · 230145E · EN3160 Assignment 3**\n\n'
@@ -38,7 +39,12 @@ code('''
 import os, sys, json, math
 from pathlib import Path
 ROOT = Path.cwd()
-if ROOT.name == 'notebooks': ROOT = ROOT.parent
+for candidate in [ROOT, ROOT.parent, ROOT/'assignment3']:
+    if (candidate/'src'/'models.py').is_file() and (candidate/'results').is_dir():
+        ROOT = candidate.resolve()
+        break
+else:
+    raise FileNotFoundError('Open this notebook from the Assignment 3 repository.')
 sys.path.insert(0, str(ROOT))
 os.environ['MPLCONFIGDIR'] = str(ROOT/'tmp'/'matplotlib')
 import torch
@@ -49,6 +55,18 @@ from src.experiments import cifar, mnist, transfer
 RUN_TRAINING = False  # True repeats full training; False reads completed runs.
 def summary(name):
     return json.loads((ROOT/'results'/name/'summary.json').read_text())
+def refresh_figures(stage):
+    from scripts import make_figures as figures
+    if stage == 'q1':
+        figures.curves(['cifar_manual'], ['Manual MLP'], 'test', 'q1_curves')
+    elif stage == 'q2':
+        figures.curves(['lenet5','modern_cnn'], ['LeNet-5','Modern CNN'], 'test', 'q2_curves')
+        figures.matrices(['lenet5','modern_cnn'], ['LeNet-5: test counts','Modern CNN: test counts'], list(range(10)), 'q2_confusion')
+        figures.mnist_errors()
+    elif stage == 'q3':
+        figures.curves(['resnet18_finetune','resnet18_features'], ['Fine-tuning','Fixed features'], 'validation', 'q3_curves')
+        figures.matrices(['resnet18_finetune','resnet18_features'], ['Fine-tuning: validation counts','Fixed features: validation counts'], ['ants','bees'], 'q3_confusion')
+        figures.transfer_examples()
 def result_table(names, labels, split='test'):
     lines=['| Model | Epochs | Train loss | Train accuracy | '+split.title()+' loss | '+split.title()+' accuracy |',
            '|---|---:|---:|---:|---:|---:|']
@@ -117,6 +135,7 @@ prevents overflow when computing the loss.
 code('''
 if RUN_TRAINING:
     cifar(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    refresh_figures('q1')
 else:
     print('Using the completed full-data, 10-epoch manual-gradient run.')
 result_table(['cifar_manual'], ['Manual sigmoid MLP'])
@@ -164,8 +183,27 @@ order to both architectures. The architecture, parameter count, and inherent
 dropout/BN behavior are the intended differences.
 ''')
 code('''
+# Core loop used for each MNIST architecture (data tensors are on the device).
+from src.experiments import evaluate_tensor
+def train_mnist_model(model, x, y, x_test, y_test):
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    generator = torch.Generator(device=x.device).manual_seed(230145)
+    for epoch in range(10):
+        model.train()
+        order = torch.randperm(len(y), generator=generator, device=x.device)
+        for indices in order.split(128):
+            optimizer.zero_grad(set_to_none=True)
+            loss = nn.functional.cross_entropy(model(x[indices]), y[indices])
+            loss.backward()
+            optimizer.step()
+        train_metrics, _ = evaluate_tensor(model, x, y, batch_size=256)
+        test_metrics, _ = evaluate_tensor(model, x_test, y_test, batch_size=256)
+        print(epoch + 1, train_metrics, test_metrics)
+''')
+code('''
 if RUN_TRAINING:
     mnist(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    refresh_figures('q2')
 else:
     print('Using both completed full-data, 10-epoch MNIST runs.')
 result_table(['lenet5','modern_cnn'], ['LeNet-5','Modern CNN'])
@@ -184,6 +222,11 @@ display(Markdown(
     f"**Comparison.** Modern CNN minus LeNet-5 is **{delta:+.2f} percentage points** "
     f"in final test accuracy ({b['test']['count']-b['test']['correct']} versus "
     f"{a['test']['count']-a['test']['correct']} errors). "
+    f"The train--test gaps are {100*(a['train']['accuracy']-a['test']['accuracy']):.2f} "
+    f"points for LeNet-5 and {100*(b['train']['accuracy']-b['test']['accuracy']):.2f} "
+    f"for the modern CNN. The modern network uses {b['config']['parameters']:,} "
+    f"parameters versus {a['config']['parameters']:,}; training plus evaluation takes "
+    f"{b['duration_seconds']:.1f}s versus {a['duration_seconds']:.1f}s in this run. "
     "Batch normalization supports stable deeper optimization; dropout regularizes the "
     "modern model, while convolutional locality benefits both models. Parameter counts "
     "differ, so this compares complete architectures rather than isolating BN or dropout. "
@@ -191,6 +234,12 @@ display(Markdown(
     "correct classifications. Some poorly formed digits remain ambiguous, as the "
     "error examples show. One seed and ten epochs cannot establish which architecture "
     "is universally best."
+))
+display(Markdown(
+    "LeNet-5's test loss falls to about 0.0355 at epoch 6 and rises to 0.0396 at epoch "
+    "10 while training loss continues lower, suggesting mild overfitting. The modern "
+    "CNN also fluctuates late in training rather than improving monotonically. Neither "
+    "curve is used to replace the prescribed final-epoch checkpoint."
 ))
 import numpy as np
 for name in ['lenet5','modern_cnn']:
@@ -205,9 +254,9 @@ section('## 3. Hymenoptera transfer learning with ResNet18')
 md('''
 ### Data, preprocessing and two adaptation strategies
 
-The official tutorial supplies **244 training images** and **153 validation images**,
-with classes `ants` and `bees`. Its validation split is the only held-out split;
-these results are **validation results**, not an independent test-set estimate.
+The tutorial dataset has **244 training images** (123 ants, 121 bees) and **153
+validation images** (70 ants, 83 bees). There is **no independent test split**.
+Always predicting bees would give 54.25% validation accuracy.
 
 Both experiments start from `ResNet18_Weights.IMAGENET1K_V1`, trained on ImageNet1K.
 The original 1000-class head is replaced by a 512→2 linear head. Fine-tuning updates
@@ -242,6 +291,7 @@ def set_training_mode(model, feature_extractor=False):
 code('''
 if RUN_TRAINING:
     transfer(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    refresh_figures('q3')
 else:
     print('Using both completed full-data, 25-epoch transfer-learning runs.')
 result_table(['resnet18_finetune','resnet18_features'],
@@ -249,7 +299,8 @@ result_table(['resnet18_finetune','resnet18_features'],
 for name in ['resnet18_finetune','resnet18_features']:
     s=summary(name)
     print(name, '| trainable parameters:', s['config']['trainable_parameters'],
-          '| validation correct:', s['validation']['correct'], '/', s['validation']['count'])
+          '| validation correct:', s['validation']['correct'], '/', s['validation']['count'],
+          '| training + evaluation seconds:', round(s['duration_seconds'],1))
 ''')
 picture('q3_curves','Figure 6. Twenty-five-epoch train/validation learning curves. Scheduled reductions occur after epochs 7, 14, and 21.')
 picture('q3_confusion','Figure 7. Validation confusion matrices for fine-tuning and frozen feature extraction. Every matrix contains all 153 held-out images.')
@@ -265,12 +316,22 @@ display(Markdown(
     "percentage points on this small split. Fine-tuning adapts visual features but "
     "exposes many more parameters to just 244 training images. A fixed extractor "
     "retains ImageNet representations and reduces the optimized parameter count to "
-    "1,026, usually reducing training cost and the opportunity to overfit. "
+    "1,026, reducing backward computation and the opportunity to overfit. "
+    f"Measured training-plus-evaluation times are {a['duration_seconds']:.1f}s for "
+    f"fine-tuning and {b['duration_seconds']:.1f}s for fixed features. These similar "
+    "totals include input transforms and full-split evaluation, so this run does "
+    "not demonstrate an end-to-end speed advantage for freezing the backbone. "
     "Background context, insect scale, and cropped or partially visible insects can "
     "affect either classifier. These are possible explanations, not causal conclusions "
     "from six visual examples. No independent test split or repeated-seed uncertainty "
     "estimate was supplied, so the comparison is limited to this validation split."
 ))
+for name in ['resnet18_finetune','resnet18_features']:
+    cm=np.loadtxt(ROOT/'results'/name/'confusion_matrix.csv',delimiter=',',dtype=int)
+    recalls=cm.diagonal()/cm.sum(axis=1)
+    print(name, '| ant recall:',f'{100*recalls[0]:.2f}%',
+          '| bee recall:',f'{100*recalls[1]:.2f}%',
+          '| balanced accuracy:',f'{100*recalls.mean():.2f}%')
 ''',True)
 
 section('## 4. Reproducibility and verification')
@@ -286,6 +347,9 @@ The manual-gradient test checks all four analytic gradients against float64 auto
 including repeated class labels. A large-logit case checks loss stability and an SGD
 step. Other tests verify the required model shapes/layer counts and that the fixed
 extractor keeps BN statistics unchanged while the classification head receives gradients.
+The held-out predictions are also regenerated by independently reloading each saved
+checkpoint and compared with the archived prediction arrays. Confusion-matrix totals,
+diagonal accuracies, epoch counts, summaries and checkpoint hashes are cross-checked.
 
 Reproduce from the repository root:
 
@@ -293,6 +357,8 @@ Reproduce from the repository root:
 python -m pip install -r requirements.txt
 python -m pytest tests -q
 python -m src.experiments --task all
+python scripts/verify_results.py
+python scripts/verify_checkpoints.py
 python scripts/make_figures.py
 python scripts/build_notebook.py
 python scripts/export_pdf.py

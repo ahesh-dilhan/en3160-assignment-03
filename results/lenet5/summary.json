@@ -1,0 +1,45 @@
+{
+  "name": "lenet5",
+  "config": {
+    "epochs": 10,
+    "batch_size": 128,
+    "optimizer": "Adam",
+    "lr": 0.001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "weight_decay": 0,
+    "augmentation": "none",
+    "normalization": "(x/255 - 0.1307)/0.3081, padded from 28 to 32",
+    "training_size": 60000,
+    "test_size": 10000,
+    "parameters": 61706,
+    "metric_mode": "eval after each epoch on full train and test splits",
+    "checkpoint_selection": "final epoch 10, no test-based selection"
+  },
+  "environment": {
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "numpy": "2.5.4",
+    "device": "NVIDIA GeForce RTX 2050",
+    "cuda": "12.4",
+    "seed": 230145,
+    "threads": 6
+  },
+  "train": {
+    "loss": 0.012764325862377883,
+    "accuracy": 0.9959833333333333,
+    "correct": 59759,
+    "count": 60000
+  },
+  "test": {
+    "loss": 0.039568265258474275,
+    "accuracy": 0.9878,
+    "correct": 9878,
+    "count": 10000
+  },
+  "duration_seconds": 12.881244100000913,
+  "checkpoint_sha256": "dbab7cb12e90620047678d90cff610654cdb5642fcf08441fa49e62ef6f87b6b",
+  "final_epoch": 10
+}

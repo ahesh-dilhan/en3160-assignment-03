@@ -1,0 +1,27 @@
+{
+  "cifar_manual": {
+    "predictions_match": true,
+    "correct": 4777,
+    "count": 10000
+  },
+  "lenet5": {
+    "predictions_match": true,
+    "correct": 9878,
+    "count": 10000
+  },
+  "modern_cnn": {
+    "predictions_match": true,
+    "correct": 9922,
+    "count": 10000
+  },
+  "resnet18_finetune": {
+    "predictions_match": true,
+    "correct": 144,
+    "count": 153
+  },
+  "resnet18_features": {
+    "predictions_match": true,
+    "correct": 147,
+    "count": 153
+  }
+}
