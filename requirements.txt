@@ -1,0 +1,11 @@
+torch==2.6.0
+torchvision==0.21.0
+numpy
+matplotlib
+pillow
+nbformat
+nbclient
+ipykernel
+pypandoc_binary
+pytest
+pypdf
